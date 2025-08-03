@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Navigation } from '@/components/Navigation';
+import { Dashboard } from '@/components/Dashboard';
 import { ClientList } from '@/components/ClientList';
 import { ClientForm } from '@/components/ClientForm';
 import { SessionList } from '@/components/SessionList';
@@ -8,18 +10,27 @@ import { SessionDetail } from '@/components/SessionDetail';
 import { useToast } from '@/hooks/use-toast';
 import { Client, Session } from '@/types';
 
-type View = 'clients' | 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit';
+type MainView = 'dashboard' | 'clients';
+type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit';
 
 const Index = () => {
   const [clients, setClients] = useLocalStorage<Client[]>('coaching-clients', []);
   const [sessions, setSessions] = useLocalStorage<Session[]>('coaching-sessions', []);
-  const [currentView, setCurrentView] = useState<View>('clients');
+  const [mainView, setMainView] = useState<MainView>('dashboard');
+  const [subView, setSubView] = useState<SubView | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
+  const handleMainViewChange = (view: MainView) => {
+    setMainView(view);
+    setSubView(null);
+    setSelectedClient(null);
+    setSelectedSession(null);
+  };
+
   const handleAddClient = () => {
-    setCurrentView('client-form');
+    setSubView('client-form');
   };
 
   const handleSaveClient = (clientData: Omit<Client, 'id' | 'createdAt'>) => {
@@ -29,7 +40,8 @@ const Index = () => {
       createdAt: new Date()
     };
     setClients([...clients, newClient]);
-    setCurrentView('clients');
+    setMainView('clients');
+    setSubView(null);
     toast({
       title: "Client added successfully",
       description: `${newClient.name} has been added to your client list.`
@@ -38,12 +50,12 @@ const Index = () => {
 
   const handleSelectClient = (client: Client) => {
     setSelectedClient(client);
-    setCurrentView('sessions');
+    setSubView('sessions');
   };
 
   const handleAddSession = () => {
     if (selectedClient) {
-      setCurrentView('session-form');
+      setSubView('session-form');
     }
   };
 
@@ -54,7 +66,7 @@ const Index = () => {
       createdAt: new Date()
     };
     setSessions([...sessions, newSession]);
-    setCurrentView('sessions');
+    setSubView('sessions');
     toast({
       title: "Session logged successfully",
       description: `Session #${newSession.sessionNumber} has been recorded.`
@@ -63,7 +75,7 @@ const Index = () => {
 
   const handleEditSession = (session: Session) => {
     setSelectedSession(session);
-    setCurrentView('session-edit');
+    setSubView('session-edit');
   };
 
   const handleUpdateSession = (sessionData: Omit<Session, 'id' | 'createdAt'>) => {
@@ -74,7 +86,7 @@ const Index = () => {
         createdAt: selectedSession.createdAt
       };
       setSessions(sessions.map(s => s.id === selectedSession.id ? updatedSession : s));
-      setCurrentView('session-detail');
+      setSubView('session-detail');
       toast({
         title: "Session updated successfully",
         description: `Session #${updatedSession.sessionNumber} has been updated.`
@@ -84,17 +96,18 @@ const Index = () => {
 
   const handleViewSession = (session: Session) => {
     setSelectedSession(session);
-    setCurrentView('session-detail');
+    setSubView('session-detail');
   };
 
   const handleBackToClients = () => {
     setSelectedClient(null);
-    setCurrentView('clients');
+    setMainView('clients');
+    setSubView(null);
   };
 
   const handleBackToSessions = () => {
     setSelectedSession(null);
-    setCurrentView('sessions');
+    setSubView('sessions');
   };
 
   const getClientSessions = (clientId: string) => {
@@ -106,10 +119,29 @@ const Index = () => {
     return clientSessions.length + 1;
   };
 
+  // Determine if we should show navigation (not in sub-views)
+  const showNavigation = !subView;
+
   return (
     <div className="min-h-screen bg-background">
+      {showNavigation && (
+        <Navigation
+          currentView={mainView}
+          onViewChange={handleMainViewChange}
+        />
+      )}
+      
       <div className="container mx-auto px-4 py-8">
-        {currentView === 'clients' && (
+        {/* Main views */}
+        {mainView === 'dashboard' && !subView && (
+          <Dashboard
+            clients={clients}
+            sessions={sessions}
+            onViewClients={() => handleMainViewChange('clients')}
+          />
+        )}
+
+        {mainView === 'clients' && !subView && (
           <ClientList
             clients={clients}
             onSelectClient={handleSelectClient}
@@ -117,14 +149,15 @@ const Index = () => {
           />
         )}
 
-        {currentView === 'client-form' && (
+        {/* Sub views */}
+        {subView === 'client-form' && (
           <ClientForm
             onSave={handleSaveClient}
-            onCancel={() => setCurrentView('clients')}
+            onCancel={() => setSubView(null)}
           />
         )}
 
-        {currentView === 'sessions' && selectedClient && (
+        {subView === 'sessions' && selectedClient && (
           <SessionList
             client={selectedClient}
             sessions={getClientSessions(selectedClient.id)}
@@ -134,7 +167,7 @@ const Index = () => {
           />
         )}
 
-        {currentView === 'session-form' && selectedClient && (
+        {subView === 'session-form' && selectedClient && (
           <SessionForm
             client={selectedClient}
             sessionNumber={getNextSessionNumber(selectedClient.id)}
@@ -143,7 +176,7 @@ const Index = () => {
           />
         )}
 
-        {currentView === 'session-detail' && selectedClient && selectedSession && (
+        {subView === 'session-detail' && selectedClient && selectedSession && (
           <SessionDetail
             client={selectedClient}
             session={selectedSession}
@@ -152,13 +185,13 @@ const Index = () => {
           />
         )}
 
-        {currentView === 'session-edit' && selectedClient && selectedSession && (
+        {subView === 'session-edit' && selectedClient && selectedSession && (
           <SessionForm
             client={selectedClient}
             sessionNumber={selectedSession.sessionNumber}
             existingSession={selectedSession}
             onSave={handleUpdateSession}
-            onCancel={() => setCurrentView('session-detail')}
+            onCancel={() => setSubView('session-detail')}
           />
         )}
       </div>
