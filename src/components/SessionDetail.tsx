@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, Hash, Target, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Hash, Target, CheckCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,10 @@ interface SessionDetailProps {
   client: Client;
   session: Session;
   onBack: () => void;
+  onEdit: () => void;
 }
 
-export function SessionDetail({ client, session, onBack }: SessionDetailProps) {
+export function SessionDetail({ client, session, onBack, onEdit }: SessionDetailProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -18,10 +19,14 @@ export function SessionDetail({ client, session, onBack }: SessionDetailProps) {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Sessions
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-foreground">Session Details</h1>
           <p className="text-muted-foreground">{client.name} - {client.company}</p>
         </div>
+        <Button variant="outline" onClick={onEdit} className="gap-2">
+          <Edit className="h-4 w-4" />
+          Edit Session
+        </Button>
       </div>
 
       <Card>

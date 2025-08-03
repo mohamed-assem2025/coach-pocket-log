@@ -10,16 +10,17 @@ import { Client, Session } from '@/types';
 interface SessionFormProps {
   client: Client;
   sessionNumber: number;
+  existingSession?: Session;
   onSave: (session: Omit<Session, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
 }
 
-export function SessionForm({ client, sessionNumber, onSave, onCancel }: SessionFormProps) {
+export function SessionForm({ client, sessionNumber, existingSession, onSave, onCancel }: SessionFormProps) {
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    focusArea: '',
-    summary: '',
-    actionItems: ['']
+    date: existingSession ? new Date(existingSession.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    focusArea: existingSession?.focusArea || '',
+    summary: existingSession?.summary || '',
+    actionItems: existingSession?.actionItems.length ? existingSession.actionItems : ['']
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,7 +64,7 @@ export function SessionForm({ client, sessionNumber, onSave, onCancel }: Session
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>New Session - {client.name}</CardTitle>
+          <CardTitle>{existingSession ? 'Edit' : 'New'} Session - {client.name}</CardTitle>
           <p className="text-sm text-muted-foreground">Session #{sessionNumber}</p>
         </CardHeader>
         <CardContent>

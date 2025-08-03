@@ -8,7 +8,7 @@ import { SessionDetail } from '@/components/SessionDetail';
 import { useToast } from '@/hooks/use-toast';
 import { Client, Session } from '@/types';
 
-type View = 'clients' | 'client-form' | 'sessions' | 'session-form' | 'session-detail';
+type View = 'clients' | 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit';
 
 const Index = () => {
   const [clients, setClients] = useLocalStorage<Client[]>('coaching-clients', []);
@@ -59,6 +59,27 @@ const Index = () => {
       title: "Session logged successfully",
       description: `Session #${newSession.sessionNumber} has been recorded.`
     });
+  };
+
+  const handleEditSession = (session: Session) => {
+    setSelectedSession(session);
+    setCurrentView('session-edit');
+  };
+
+  const handleUpdateSession = (sessionData: Omit<Session, 'id' | 'createdAt'>) => {
+    if (selectedSession) {
+      const updatedSession: Session = {
+        ...sessionData,
+        id: selectedSession.id,
+        createdAt: selectedSession.createdAt
+      };
+      setSessions(sessions.map(s => s.id === selectedSession.id ? updatedSession : s));
+      setCurrentView('session-detail');
+      toast({
+        title: "Session updated successfully",
+        description: `Session #${updatedSession.sessionNumber} has been updated.`
+      });
+    }
   };
 
   const handleViewSession = (session: Session) => {
@@ -127,6 +148,17 @@ const Index = () => {
             client={selectedClient}
             session={selectedSession}
             onBack={handleBackToSessions}
+            onEdit={() => handleEditSession(selectedSession)}
+          />
+        )}
+
+        {currentView === 'session-edit' && selectedClient && selectedSession && (
+          <SessionForm
+            client={selectedClient}
+            sessionNumber={selectedSession.sessionNumber}
+            existingSession={selectedSession}
+            onSave={handleUpdateSession}
+            onCancel={() => setCurrentView('session-detail')}
           />
         )}
       </div>
