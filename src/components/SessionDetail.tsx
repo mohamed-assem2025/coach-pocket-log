@@ -1,17 +1,22 @@
-import { ArrowLeft, Calendar, Hash, Target, CheckCircle, Edit, DollarSign, CreditCard } from 'lucide-react';
+import { ArrowLeft, Calendar, Hash, Target, CheckCircle, Edit, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Client, Session } from '@/types';
+import { PaymentList } from '@/components/PaymentList';
+import { Client, Session, Payment } from '@/types';
 
 interface SessionDetailProps {
   client: Client;
   session: Session;
+  payments: Payment[];
   onBack: () => void;
   onEdit: () => void;
+  onAddPayment: () => void;
+  onEditPayment: (payment: Payment) => void;
+  onDeletePayment: (paymentId: string) => void;
 }
 
-export function SessionDetail({ client, session, onBack, onEdit }: SessionDetailProps) {
+export function SessionDetail({ client, session, payments, onBack, onEdit, onAddPayment, onEditPayment, onDeletePayment }: SessionDetailProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -82,48 +87,21 @@ export function SessionDetail({ client, session, onBack, onEdit }: SessionDetail
             </div>
           )}
 
-          {/* Payment Information */}
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Payment Information
-            </h3>
-            {session.payment ? (
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Amount</span>
-                    <p className="font-medium">{session.payment.currency} {session.payment.amount.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Payment Date</span>
-                    <p className="font-medium">{new Date(session.payment.paymentDate).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Method</span>
-                    <p className="font-medium flex items-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      {session.payment.paymentMethod}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Status</span>
-                    <p className="font-medium text-green-600">Paid</p>
-                  </div>
+          {/* Session Pricing */}
+          {session.dueAmount && (
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Session Pricing
+              </h3>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Due Amount</span>
+                  <p className="font-medium text-lg">{session.currency} {session.dueAmount.toFixed(2)}</p>
                 </div>
-                {session.payment.notes && (
-                  <div className="pt-2 border-t">
-                    <span className="text-muted-foreground text-sm">Notes</span>
-                    <p className="text-sm">{session.payment.notes}</p>
-                  </div>
-                )}
               </div>
-            ) : (
-              <div className="bg-muted/30 rounded-lg p-4 text-center">
-                <p className="text-muted-foreground text-sm">No payment information recorded</p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="text-xs text-muted-foreground pt-4 border-t">
             Session logged on {new Date(session.createdAt).toLocaleDateString('en-US', {
@@ -136,6 +114,16 @@ export function SessionDetail({ client, session, onBack, onEdit }: SessionDetail
           </div>
         </CardContent>
       </Card>
+
+      {/* Payment Management */}
+      <PaymentList
+        payments={payments}
+        dueAmount={session.dueAmount}
+        currency={session.currency}
+        onAddPayment={onAddPayment}
+        onEditPayment={onEditPayment}
+        onDeletePayment={onDeletePayment}
+      />
     </div>
   );
 }

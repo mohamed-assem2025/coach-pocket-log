@@ -23,13 +23,8 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
     focusArea: existingSession?.focusArea || '',
     summary: existingSession?.summary || '',
     actionItems: existingSession?.actionItems.length ? existingSession.actionItems : [''],
-    payment: {
-      amount: existingSession?.payment?.amount || '',
-      currency: existingSession?.payment?.currency || 'USD',
-      paymentDate: existingSession?.payment?.paymentDate ? new Date(existingSession.payment.paymentDate).toISOString().split('T')[0] : '',
-      paymentMethod: existingSession?.payment?.paymentMethod || 'Bank Transfer' as const,
-      notes: existingSession?.payment?.notes || ''
-    }
+    dueAmount: existingSession?.dueAmount?.toString() || '',
+    currency: existingSession?.currency || 'USD'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,19 +36,10 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
         date: new Date(formData.date),
         focusArea: formData.focusArea,
         summary: formData.summary,
-        actionItems: formData.actionItems.filter(item => item.trim() !== '')
+        actionItems: formData.actionItems.filter(item => item.trim() !== ''),
+        dueAmount: formData.dueAmount ? Number(formData.dueAmount) : undefined,
+        currency: formData.dueAmount ? formData.currency : undefined
       };
-
-      // Add payment info if amount is provided
-      if (formData.payment.amount && formData.payment.paymentDate) {
-        sessionData.payment = {
-          amount: Number(formData.payment.amount),
-          currency: formData.payment.currency,
-          paymentDate: new Date(formData.payment.paymentDate),
-          paymentMethod: formData.payment.paymentMethod,
-          notes: formData.payment.notes || undefined
-        };
-      }
 
       onSave(sessionData);
     }
@@ -158,25 +144,22 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
 
             <Separator className="my-6" />
             
-            {/* Payment Section */}
+            {/* Pricing Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                <Label className="text-base font-medium">Payment Information (Optional)</Label>
+                <Label className="text-base font-medium">Session Pricing (Optional)</Label>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="dueAmount">Due Amount</Label>
                   <Input
-                    id="amount"
+                    id="dueAmount"
                     type="number"
                     step="0.01"
-                    value={formData.payment.amount}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      payment: { ...formData.payment, amount: e.target.value }
-                    })}
+                    value={formData.dueAmount}
+                    onChange={(e) => setFormData({ ...formData, dueAmount: e.target.value })}
                     placeholder="0.00"
                   />
                 </div>
@@ -184,11 +167,8 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
                 <div className="space-y-2">
                   <Label htmlFor="currency">Currency</Label>
                   <Select
-                    value={formData.payment.currency}
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      payment: { ...formData.payment, currency: value }
-                    })}
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -200,56 +180,6 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
                       <SelectItem value="GBP">GBP</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="paymentDate">Payment Date</Label>
-                  <Input
-                    id="paymentDate"
-                    type="date"
-                    value={formData.payment.paymentDate}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      payment: { ...formData.payment, paymentDate: e.target.value }
-                    })}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMethod">Payment Method</Label>
-                  <Select
-                    value={formData.payment.paymentMethod}
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      payment: { ...formData.payment, paymentMethod: value as any }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="PayPal">PayPal</SelectItem>
-                      <SelectItem value="Stripe">Stripe</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="paymentNotes">Payment Notes</Label>
-                  <Input
-                    id="paymentNotes"
-                    value={formData.payment.notes}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      payment: { ...formData.payment, notes: e.target.value }
-                    })}
-                    placeholder="Optional notes about payment"
-                  />
                 </div>
               </div>
             </div>

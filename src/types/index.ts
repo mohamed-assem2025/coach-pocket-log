@@ -15,12 +15,18 @@ export interface Session {
   focusArea: string;
   summary: string;
   actionItems: string[];
-  payment?: {
-    amount: number;
-    currency: string;
-    paymentDate: Date;
-    paymentMethod: 'Bank Transfer' | 'Cash' | 'PayPal' | 'Stripe' | 'Other';
-    notes?: string;
-  };
+  dueAmount?: number;
+  currency?: string;
+  createdAt: Date;
+}
+
+export interface Payment {
+  id: string;
+  sessionId: string;
+  amount: number;
+  currency: string;
+  paymentDate: Date;
+  paymentMethod: 'Bank Transfer' | 'Cash' | 'PayPal' | 'Stripe' | 'Other';
+  notes?: string;
   createdAt: Date;
 }

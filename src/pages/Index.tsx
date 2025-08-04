@@ -7,19 +7,22 @@ import { ClientForm } from '@/components/ClientForm';
 import { SessionList } from '@/components/SessionList';
 import { SessionForm } from '@/components/SessionForm';
 import { SessionDetail } from '@/components/SessionDetail';
+import { PaymentForm } from '@/components/PaymentForm';
 import { useToast } from '@/hooks/use-toast';
-import { Client, Session } from '@/types';
+import { Client, Session, Payment } from '@/types';
 
 type MainView = 'dashboard' | 'clients';
-type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit';
+type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit' | 'payment-form' | 'payment-edit';
 
 const Index = () => {
   const [clients, setClients] = useLocalStorage<Client[]>('coaching-clients', []);
   const [sessions, setSessions] = useLocalStorage<Session[]>('coaching-sessions', []);
+  const [payments, setPayments] = useLocalStorage<Payment[]>('coaching-payments', []);
   const [mainView, setMainView] = useState<MainView>('dashboard');
   const [subView, setSubView] = useState<SubView | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const { toast } = useToast();
 
   const handleMainViewChange = (view: MainView) => {
@@ -27,6 +30,7 @@ const Index = () => {
     setSubView(null);
     setSelectedClient(null);
     setSelectedSession(null);
+    setSelectedPayment(null);
   };
 
   const handleAddClient = () => {
@@ -107,11 +111,64 @@ const Index = () => {
 
   const handleBackToSessions = () => {
     setSelectedSession(null);
+    setSelectedPayment(null);
     setSubView('sessions');
   };
 
   const getClientSessions = (clientId: string) => {
     return sessions.filter(session => session.clientId === clientId);
+  };
+
+  // Payment handlers
+  const handleAddPayment = () => {
+    setSubView('payment-form');
+  };
+
+  const handleSavePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
+    const newPayment: Payment = {
+      ...paymentData,
+      id: crypto.randomUUID(),
+      createdAt: new Date()
+    };
+    setPayments([...payments, newPayment]);
+    setSubView('session-detail');
+    toast({
+      title: "Payment recorded successfully",
+      description: `Payment of ${paymentData.currency} ${paymentData.amount} has been recorded.`
+    });
+  };
+
+  const handleEditPayment = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setSubView('payment-edit');
+  };
+
+  const handleUpdatePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
+    if (selectedPayment) {
+      const updatedPayment: Payment = {
+        ...paymentData,
+        id: selectedPayment.id,
+        createdAt: selectedPayment.createdAt
+      };
+      setPayments(payments.map(p => p.id === selectedPayment.id ? updatedPayment : p));
+      setSubView('session-detail');
+      toast({
+        title: "Payment updated successfully",
+        description: `Payment has been updated.`
+      });
+    }
+  };
+
+  const handleDeletePayment = (paymentId: string) => {
+    setPayments(payments.filter(p => p.id !== paymentId));
+    toast({
+      title: "Payment deleted",
+      description: "Payment record has been removed."
+    });
+  };
+
+  const getSessionPayments = (sessionId: string) => {
+    return payments.filter(payment => payment.sessionId === sessionId);
   };
 
   const getNextSessionNumber = (clientId: string) => {
@@ -134,11 +191,12 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Main views */}
         {mainView === 'dashboard' && !subView && (
-          <Dashboard
-            clients={clients}
-            sessions={sessions}
-            onViewClients={() => handleMainViewChange('clients')}
-          />
+        <Dashboard
+          clients={clients}
+          sessions={sessions}
+          payments={payments}
+          onViewClients={() => handleMainViewChange('clients')}
+        />
         )}
 
         {mainView === 'clients' && !subView && (
@@ -177,12 +235,16 @@ const Index = () => {
         )}
 
         {subView === 'session-detail' && selectedClient && selectedSession && (
-          <SessionDetail
-            client={selectedClient}
-            session={selectedSession}
-            onBack={handleBackToSessions}
-            onEdit={() => handleEditSession(selectedSession)}
-          />
+        <SessionDetail
+          client={selectedClient}
+          session={selectedSession}
+          payments={getSessionPayments(selectedSession.id)}
+          onBack={handleBackToSessions}
+          onEdit={() => handleEditSession(selectedSession)}
+          onAddPayment={handleAddPayment}
+          onEditPayment={handleEditPayment}
+          onDeletePayment={handleDeletePayment}
+        />
         )}
 
         {subView === 'session-edit' && selectedClient && selectedSession && (
@@ -191,6 +253,24 @@ const Index = () => {
             sessionNumber={selectedSession.sessionNumber}
             existingSession={selectedSession}
             onSave={handleUpdateSession}
+            onCancel={() => setSubView('session-detail')}
+        />
+        )}
+
+        {subView === 'payment-form' && selectedSession && (
+          <PaymentForm
+            sessionId={selectedSession.id}
+            defaultCurrency={selectedSession.currency}
+            onSave={handleSavePayment}
+            onCancel={handleBackToSessions}
+          />
+        )}
+
+        {subView === 'payment-edit' && selectedPayment && (
+          <PaymentForm
+            sessionId={selectedPayment.sessionId}
+            existingPayment={selectedPayment}
+            onSave={handleUpdatePayment}
             onCancel={() => setSubView('session-detail')}
           />
         )}

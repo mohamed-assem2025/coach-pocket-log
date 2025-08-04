@@ -1,15 +1,16 @@
 import { BarChart3, Users, Calendar, Target, Clock, TrendingUp, DollarSign, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Client, Session } from '@/types';
+import { Client, Session, Payment } from '@/types';
 
 interface DashboardProps {
   clients: Client[];
   sessions: Session[];
+  payments: Payment[];
   onViewClients: () => void;
 }
 
-export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) {
+export function Dashboard({ clients, sessions, payments, onViewClients }: DashboardProps) {
   // Calculate stats
   const totalClients = clients.length;
   const totalSessions = sessions.length;
@@ -45,23 +46,20 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
     .slice(0, 5);
 
   // Payment statistics
-  const paidSessions = sessions.filter(session => session.payment);
-  const totalRevenue = paidSessions.reduce((sum, session) => sum + (session.payment?.amount || 0), 0);
-  const thisMonthRevenue = paidSessions
-    .filter(session => new Date(session.date) >= firstDayOfMonth)
-    .reduce((sum, session) => sum + (session.payment?.amount || 0), 0);
+  const totalRevenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const thisMonthRevenue = payments
+    .filter(payment => new Date(payment.paymentDate) >= firstDayOfMonth)
+    .reduce((sum, payment) => sum + payment.amount, 0);
 
   // Payment methods breakdown
-  const paymentMethods = paidSessions.reduce((acc, session) => {
-    if (session.payment) {
-      acc[session.payment.paymentMethod] = (acc[session.payment.paymentMethod] || 0) + 1;
-    }
+  const paymentMethods = payments.reduce((acc, payment) => {
+    acc[payment.paymentMethod] = (acc[payment.paymentMethod] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   // Recent payments
-  const recentPayments = paidSessions
-    .sort((a, b) => new Date(b.payment!.paymentDate).getTime() - new Date(a.payment!.paymentDate).getTime())
+  const recentPayments = payments
+    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
     .slice(0, 5);
 
   return (
@@ -109,7 +107,7 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
           <CardContent>
             <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {paidSessions.length} paid sessions
+              {payments.length} payments recorded
             </p>
           </CardContent>
         </Card>
@@ -228,20 +226,21 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentPayments.map((session) => {
-                const client = clients.find(c => c.id === session.clientId);
+              {recentPayments.map((payment) => {
+                const session = sessions.find(s => s.id === payment.sessionId);
+                const client = clients.find(c => c.id === session?.clientId);
                 return (
-                  <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <p className="font-medium text-sm">{client?.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Session #{session.sessionNumber} • {session.payment!.paymentMethod}
+                        Session #{session?.sessionNumber} • {payment.paymentMethod}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">{session.payment!.currency} {session.payment!.amount.toFixed(2)}</p>
+                      <p className="font-medium">{payment.currency} {payment.amount.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(session.payment!.paymentDate).toLocaleDateString()}
+                        {new Date(payment.paymentDate).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
