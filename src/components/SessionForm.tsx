@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Client, Session } from '@/types';
 
 interface SessionFormProps {
@@ -20,20 +22,40 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
     date: existingSession ? new Date(existingSession.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     focusArea: existingSession?.focusArea || '',
     summary: existingSession?.summary || '',
-    actionItems: existingSession?.actionItems.length ? existingSession.actionItems : ['']
+    actionItems: existingSession?.actionItems.length ? existingSession.actionItems : [''],
+    payment: {
+      amount: existingSession?.payment?.amount || '',
+      currency: existingSession?.payment?.currency || 'USD',
+      paymentDate: existingSession?.payment?.paymentDate ? new Date(existingSession.payment.paymentDate).toISOString().split('T')[0] : '',
+      paymentMethod: existingSession?.payment?.paymentMethod || 'Bank Transfer' as const,
+      notes: existingSession?.payment?.notes || ''
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.focusArea && formData.summary) {
-      onSave({
+      const sessionData: Omit<Session, 'id' | 'createdAt'> = {
         clientId: client.id,
         sessionNumber,
         date: new Date(formData.date),
         focusArea: formData.focusArea,
         summary: formData.summary,
         actionItems: formData.actionItems.filter(item => item.trim() !== '')
-      });
+      };
+
+      // Add payment info if amount is provided
+      if (formData.payment.amount && formData.payment.paymentDate) {
+        sessionData.payment = {
+          amount: Number(formData.payment.amount),
+          currency: formData.payment.currency,
+          paymentDate: new Date(formData.payment.paymentDate),
+          paymentMethod: formData.payment.paymentMethod,
+          notes: formData.payment.notes || undefined
+        };
+      }
+
+      onSave(sessionData);
     }
   };
 
@@ -132,6 +154,104 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
                   )}
                 </div>
               ))}
+            </div>
+
+            <Separator className="my-6" />
+            
+            {/* Payment Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                <Label className="text-base font-medium">Payment Information (Optional)</Label>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.payment.amount}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      payment: { ...formData.payment, amount: e.target.value }
+                    })}
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    value={formData.payment.currency}
+                    onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      payment: { ...formData.payment, currency: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="EGP">EGP</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="paymentDate">Payment Date</Label>
+                  <Input
+                    id="paymentDate"
+                    type="date"
+                    value={formData.payment.paymentDate}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      payment: { ...formData.payment, paymentDate: e.target.value }
+                    })}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <Select
+                    value={formData.payment.paymentMethod}
+                    onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      payment: { ...formData.payment, paymentMethod: value as any }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="PayPal">PayPal</SelectItem>
+                      <SelectItem value="Stripe">Stripe</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="paymentNotes">Payment Notes</Label>
+                  <Input
+                    id="paymentNotes"
+                    value={formData.payment.notes}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      payment: { ...formData.payment, notes: e.target.value }
+                    })}
+                    placeholder="Optional notes about payment"
+                  />
+                </div>
+              </div>
             </div>
             
             <div className="flex gap-2 pt-4">

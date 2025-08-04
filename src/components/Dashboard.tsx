@@ -1,4 +1,4 @@
-import { BarChart3, Users, Calendar, Target, Clock, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Calendar, Target, Clock, TrendingUp, DollarSign, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Client, Session } from '@/types';
@@ -44,6 +44,26 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5);
 
+  // Payment statistics
+  const paidSessions = sessions.filter(session => session.payment);
+  const totalRevenue = paidSessions.reduce((sum, session) => sum + (session.payment?.amount || 0), 0);
+  const thisMonthRevenue = paidSessions
+    .filter(session => new Date(session.date) >= firstDayOfMonth)
+    .reduce((sum, session) => sum + (session.payment?.amount || 0), 0);
+
+  // Payment methods breakdown
+  const paymentMethods = paidSessions.reduce((acc, session) => {
+    if (session.payment) {
+      acc[session.payment.paymentMethod] = (acc[session.payment.paymentMethod] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Recent payments
+  const recentPayments = paidSessions
+    .sort((a, b) => new Date(b.payment!.paymentDate).getTime() - new Date(a.payment!.paymentDate).getTime())
+    .slice(0, 5);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -83,32 +103,32 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{thisMonthSessions.length}</div>
+            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Sessions this month
+              {paidSessions.length} paid sessions
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Sessions</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">This Month</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{averageSessionsPerClient}</div>
+            <div className="text-2xl font-bold">${thisMonthRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Sessions per client
+              {thisMonthSessions.length} sessions this month
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         {/* Recent Activity */}
         <Card>
           <CardHeader>
@@ -169,7 +189,68 @@ export function Dashboard({ clients, sessions, onViewClients }: DashboardProps) 
             )}
           </CardContent>
         </Card>
+
+        {/* Payment Methods */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Payment Methods
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {Object.keys(paymentMethods).length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No payments yet</p>
+            ) : (
+              <div className="space-y-3">
+                {Object.entries(paymentMethods)
+                  .sort(([,a], [,b]) => b - a)
+                  .map(([method, count]) => (
+                    <div key={method} className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{method}</span>
+                      <Badge variant="outline">{count} payment{count !== 1 ? 's' : ''}</Badge>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Recent Payments */}
+      {recentPayments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Recent Payments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentPayments.map((session) => {
+                const client = clients.find(c => c.id === session.clientId);
+                return (
+                  <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{client?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Session #{session.sessionNumber} • {session.payment!.paymentMethod}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{session.payment!.currency} {session.payment!.amount.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(session.payment!.paymentDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Client Overview */}
       {clientSessionCounts.length > 0 && (

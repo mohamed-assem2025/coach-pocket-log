@@ -15,5 +15,12 @@ export interface Session {
   focusArea: string;
   summary: string;
   actionItems: string[];
+  payment?: {
+    amount: number;
+    currency: string;
+    paymentDate: Date;
+    paymentMethod: 'Bank Transfer' | 'Cash' | 'PayPal' | 'Stripe' | 'Other';
+    notes?: string;
+  };
   createdAt: Date;
 }
