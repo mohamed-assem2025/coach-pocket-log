@@ -17,6 +17,7 @@ export type Database = {
       clients: {
         Row: {
           coach_id: string
+          coaching_goal: string | null
           company: string | null
           created_at: string
           email: string | null
@@ -31,6 +32,7 @@ export type Database = {
         }
         Insert: {
           coach_id: string
+          coaching_goal?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
@@ -45,6 +47,7 @@ export type Database = {
         }
         Update: {
           coach_id?: string
+          coaching_goal?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
@@ -148,11 +151,15 @@ export type Database = {
       }
       sessions: {
         Row: {
+          action_items: string[] | null
           amount: number | null
           client_id: string
           coach_id: string
           created_at: string
+          currency: string | null
+          due_amount: number | null
           duration_minutes: number
+          focus_area: string | null
           goals: string | null
           homework: string | null
           id: string
@@ -160,15 +167,21 @@ export type Database = {
           outcomes: string | null
           rate: number | null
           session_date: string
+          session_number: number | null
           session_type: string | null
+          summary: string | null
           updated_at: string
         }
         Insert: {
+          action_items?: string[] | null
           amount?: number | null
           client_id: string
           coach_id: string
           created_at?: string
+          currency?: string | null
+          due_amount?: number | null
           duration_minutes?: number
+          focus_area?: string | null
           goals?: string | null
           homework?: string | null
           id?: string
@@ -176,15 +189,21 @@ export type Database = {
           outcomes?: string | null
           rate?: number | null
           session_date: string
+          session_number?: number | null
           session_type?: string | null
+          summary?: string | null
           updated_at?: string
         }
         Update: {
+          action_items?: string[] | null
           amount?: number | null
           client_id?: string
           coach_id?: string
           created_at?: string
+          currency?: string | null
+          due_amount?: number | null
           duration_minutes?: number
+          focus_area?: string | null
           goals?: string | null
           homework?: string | null
           id?: string
@@ -192,7 +211,9 @@ export type Database = {
           outcomes?: string | null
           rate?: number | null
           session_date?: string
+          session_number?: number | null
           session_type?: string | null
+          summary?: string | null
           updated_at?: string
         }
         Relationships: [
