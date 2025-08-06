@@ -6,7 +6,7 @@ import { useSupabaseData } from '@/hooks/useSupabaseData';
 import Navigation from '@/components/Navigation';
 import { Dashboard } from '@/components/Dashboard';
 import { ClientList } from '@/components/ClientList';
-import { ClientForm } from '@/components/ClientForm';
+import ClientForm from '@/components/ClientForm';
 import { SessionList } from '@/components/SessionList';
 import { SessionForm } from '@/components/SessionForm';
 import { SessionDetail } from '@/components/SessionDetail';

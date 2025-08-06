@@ -11,7 +11,7 @@ interface ClientFormProps {
   onCancel: () => void;
 }
 
-export function ClientForm({ onSave, onCancel }: ClientFormProps) {
+function ClientForm({ onSave, onCancel }: ClientFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -95,3 +95,5 @@ export function ClientForm({ onSave, onCancel }: ClientFormProps) {
     </div>
   );
 }
+
+export default ClientForm;
