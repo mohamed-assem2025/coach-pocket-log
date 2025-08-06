@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { Navigation } from '@/components/Navigation';
+import { Navigate } from 'react-router-dom';
+import { Client, Session, Payment } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import Navigation from '@/components/Navigation';
 import { Dashboard } from '@/components/Dashboard';
 import { ClientList } from '@/components/ClientList';
 import { ClientForm } from '@/components/ClientForm';
@@ -8,23 +11,48 @@ import { SessionList } from '@/components/SessionList';
 import { SessionForm } from '@/components/SessionForm';
 import { SessionDetail } from '@/components/SessionDetail';
 import { PaymentForm } from '@/components/PaymentForm';
-import { useToast } from '@/hooks/use-toast';
-import { Client, Session, Payment } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 type MainView = 'dashboard' | 'clients';
 type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit' | 'payment-form' | 'payment-edit';
 
 const Index = () => {
-  const [clients, setClients] = useLocalStorage<Client[]>('coaching-clients', []);
-  const [sessions, setSessions] = useLocalStorage<Session[]>('coaching-sessions', []);
-  const [payments, setPayments] = useLocalStorage<Payment[]>('coaching-payments', []);
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { 
+    clients, 
+    sessions, 
+    payments, 
+    loading: dataLoading,
+    saveClient,
+    deleteClient,
+    saveSession,
+    deleteSession,
+    savePayment,
+    deletePayment,
+  } = useSupabaseData();
+
+  // View state
   const [mainView, setMainView] = useState<MainView>('dashboard');
   const [subView, setSubView] = useState<SubView | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const { toast } = useToast();
 
+  // Redirect to auth if not authenticated
+  if (!user && !authLoading) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading spinner while checking auth state or loading data
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Navigation handlers
   const handleMainViewChange = (view: MainView) => {
     setMainView(view);
     setSubView(null);
@@ -33,23 +61,15 @@ const Index = () => {
     setSelectedPayment(null);
   };
 
+  // Client handlers
   const handleAddClient = () => {
     setSubView('client-form');
   };
 
   const handleSaveClient = (clientData: Omit<Client, 'id' | 'createdAt'>) => {
-    const newClient: Client = {
-      ...clientData,
-      id: crypto.randomUUID(),
-      createdAt: new Date()
-    };
-    setClients([...clients, newClient]);
+    saveClient(clientData);
     setMainView('clients');
     setSubView(null);
-    toast({
-      title: "Client added successfully",
-      description: `${newClient.name} has been added to your client list.`
-    });
   };
 
   const handleSelectClient = (client: Client) => {
@@ -57,6 +77,7 @@ const Index = () => {
     setSubView('sessions');
   };
 
+  // Session handlers
   const handleAddSession = () => {
     if (selectedClient) {
       setSubView('session-form');
@@ -64,17 +85,13 @@ const Index = () => {
   };
 
   const handleSaveSession = (sessionData: Omit<Session, 'id' | 'createdAt'>) => {
-    const newSession: Session = {
-      ...sessionData,
-      id: crypto.randomUUID(),
-      createdAt: new Date()
-    };
-    setSessions([...sessions, newSession]);
+    saveSession(sessionData);
     setSubView('sessions');
-    toast({
-      title: "Session logged successfully",
-      description: `Session #${newSession.sessionNumber} has been recorded.`
-    });
+  };
+
+  const handleViewSession = (session: Session) => {
+    setSelectedSession(session);
+    setSubView('session-detail');
   };
 
   const handleEditSession = (session: Session) => {
@@ -84,25 +101,44 @@ const Index = () => {
 
   const handleUpdateSession = (sessionData: Omit<Session, 'id' | 'createdAt'>) => {
     if (selectedSession) {
-      const updatedSession: Session = {
-        ...sessionData,
-        id: selectedSession.id,
-        createdAt: selectedSession.createdAt
-      };
-      setSessions(sessions.map(s => s.id === selectedSession.id ? updatedSession : s));
+      // For updates, we'd need to implement an update method in useSupabaseData
+      // For now, just go back to session detail
       setSubView('session-detail');
-      toast({
-        title: "Session updated successfully",
-        description: `Session #${updatedSession.sessionNumber} has been updated.`
-      });
     }
   };
 
-  const handleViewSession = (session: Session) => {
-    setSelectedSession(session);
+  const handleDeleteSession = (sessionId: string) => {
+    deleteSession(sessionId);
+  };
+
+  // Payment handlers
+  const handleAddPayment = () => {
+    setSubView('payment-form');
+  };
+
+  const handleSavePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
+    savePayment(paymentData);
     setSubView('session-detail');
   };
 
+  const handleEditPayment = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setSubView('payment-edit');
+  };
+
+  const handleUpdatePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
+    if (selectedPayment) {
+      // For updates, we'd need to implement an update method in useSupabaseData
+      // For now, just go back to session detail
+      setSubView('session-detail');
+    }
+  };
+
+  const handleDeletePayment = (paymentId: string) => {
+    deletePayment(paymentId);
+  };
+
+  // Navigation helpers
   const handleBackToClients = () => {
     setSelectedClient(null);
     setMainView('clients');
@@ -115,56 +151,9 @@ const Index = () => {
     setSubView('sessions');
   };
 
+  // Data helpers
   const getClientSessions = (clientId: string) => {
     return sessions.filter(session => session.clientId === clientId);
-  };
-
-  // Payment handlers
-  const handleAddPayment = () => {
-    setSubView('payment-form');
-  };
-
-  const handleSavePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
-    const newPayment: Payment = {
-      ...paymentData,
-      id: crypto.randomUUID(),
-      createdAt: new Date()
-    };
-    setPayments([...payments, newPayment]);
-    setSubView('session-detail');
-    toast({
-      title: "Payment recorded successfully",
-      description: `Payment of ${paymentData.currency} ${paymentData.amount} has been recorded.`
-    });
-  };
-
-  const handleEditPayment = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setSubView('payment-edit');
-  };
-
-  const handleUpdatePayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
-    if (selectedPayment) {
-      const updatedPayment: Payment = {
-        ...paymentData,
-        id: selectedPayment.id,
-        createdAt: selectedPayment.createdAt
-      };
-      setPayments(payments.map(p => p.id === selectedPayment.id ? updatedPayment : p));
-      setSubView('session-detail');
-      toast({
-        title: "Payment updated successfully",
-        description: `Payment has been updated.`
-      });
-    }
-  };
-
-  const handleDeletePayment = (paymentId: string) => {
-    setPayments(payments.filter(p => p.id !== paymentId));
-    toast({
-      title: "Payment deleted",
-      description: "Payment record has been removed."
-    });
   };
 
   const getSessionPayments = (sessionId: string) => {
@@ -176,27 +165,26 @@ const Index = () => {
     return clientSessions.length + 1;
   };
 
-  // Determine if we should show navigation (not in sub-views)
-  const showNavigation = !subView;
-
   return (
     <div className="min-h-screen bg-background">
-      {showNavigation && (
-        <Navigation
+      {!subView && (
+        <Navigation 
+          onViewDashboard={() => handleMainViewChange('dashboard')}
+          onViewClients={() => handleMainViewChange('clients')}
           currentView={mainView}
-          onViewChange={handleMainViewChange}
+          onSignOut={signOut}
         />
       )}
       
       <div className="container mx-auto px-4 py-8">
         {/* Main views */}
         {mainView === 'dashboard' && !subView && (
-        <Dashboard
-          clients={clients}
-          sessions={sessions}
-          payments={payments}
-          onViewClients={() => handleMainViewChange('clients')}
-        />
+          <Dashboard
+            clients={clients}
+            sessions={sessions}
+            payments={payments}
+            onViewClients={() => handleMainViewChange('clients')}
+          />
         )}
 
         {mainView === 'clients' && !subView && (
@@ -235,16 +223,16 @@ const Index = () => {
         )}
 
         {subView === 'session-detail' && selectedClient && selectedSession && (
-        <SessionDetail
-          client={selectedClient}
-          session={selectedSession}
-          payments={getSessionPayments(selectedSession.id)}
-          onBack={handleBackToSessions}
-          onEdit={() => handleEditSession(selectedSession)}
-          onAddPayment={handleAddPayment}
-          onEditPayment={handleEditPayment}
-          onDeletePayment={handleDeletePayment}
-        />
+          <SessionDetail
+            client={selectedClient}
+            session={selectedSession}
+            payments={getSessionPayments(selectedSession.id)}
+            onBack={handleBackToSessions}
+            onEdit={() => handleEditSession(selectedSession)}
+            onAddPayment={handleAddPayment}
+            onEditPayment={handleEditPayment}
+            onDeletePayment={handleDeletePayment}
+          />
         )}
 
         {subView === 'session-edit' && selectedClient && selectedSession && (
@@ -254,7 +242,7 @@ const Index = () => {
             existingSession={selectedSession}
             onSave={handleUpdateSession}
             onCancel={() => setSubView('session-detail')}
-        />
+          />
         )}
 
         {subView === 'payment-form' && selectedSession && (

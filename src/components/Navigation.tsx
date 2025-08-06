@@ -1,46 +1,51 @@
-import { BarChart3, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { BarChart3, Users, LogOut } from 'lucide-react';
 
 interface NavigationProps {
-  currentView: 'dashboard' | 'clients';
-  onViewChange: (view: 'dashboard' | 'clients') => void;
+  onViewDashboard: () => void;
+  onViewClients: () => void;
+  currentView: string;
+  onSignOut: () => void;
 }
 
-export function Navigation({ currentView, onViewChange }: NavigationProps) {
+const Navigation = ({ onViewDashboard, onViewClients, currentView, onSignOut }: NavigationProps) => {
   return (
-    <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="border-b bg-background">
       <div className="container mx-auto px-4">
-        <div className="flex h-14 items-center space-x-4 lg:space-x-6">
-          <div className="font-bold text-lg">CoachTracker</div>
-          <nav className="flex items-center space-x-4 lg:space-x-6">
-            <Button
-              variant={currentView === 'dashboard' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewChange('dashboard')}
-              className={cn(
-                "gap-2",
-                currentView === 'dashboard' && "bg-primary text-primary-foreground"
-              )}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button
-              variant={currentView === 'clients' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewChange('clients')}
-              className={cn(
-                "gap-2",
-                currentView === 'clients' && "bg-primary text-primary-foreground"
-              )}
-            >
-              <Users className="h-4 w-4" />
-              Clients
-            </Button>
-          </nav>
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center space-x-8">
+            <h1 className="text-xl font-bold">Coaching App</h1>
+            
+            <div className="flex space-x-4">
+              <Button
+                variant={currentView === 'dashboard' ? 'default' : 'outline'}
+                onClick={onViewDashboard}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Dashboard
+              </Button>
+              
+              <Button
+                variant={currentView === 'clients' ? 'default' : 'outline'}
+                onClick={onViewClients}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Clients
+              </Button>
+            </div>
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={onSignOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </div>
-    </div>
+    </nav>
   );
-}
+};
+
+export default Navigation;

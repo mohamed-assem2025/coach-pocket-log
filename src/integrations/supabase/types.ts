@@ -68,6 +68,7 @@ export type Database = {
           client_id: string
           coach_id: string
           created_at: string
+          currency: string | null
           id: string
           invoice_number: string | null
           notes: string | null
@@ -82,6 +83,7 @@ export type Database = {
           client_id: string
           coach_id: string
           created_at?: string
+          currency?: string | null
           id?: string
           invoice_number?: string | null
           notes?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           client_id?: string
           coach_id?: string
           created_at?: string
+          currency?: string | null
           id?: string
           invoice_number?: string | null
           notes?: string | null

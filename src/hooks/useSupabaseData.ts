@@ -256,10 +256,22 @@ export const useSupabaseData = () => {
   const savePayment = async (paymentData: Omit<Payment, 'id' | 'createdAt'>) => {
     if (!user) return;
 
+    // Find the client_id from the session
+    const session = sessions.find(s => s.id === paymentData.sessionId);
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "Session not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('payments')
       .insert({
         coach_id: user.id,
+        client_id: session.clientId,
         session_id: paymentData.sessionId,
         amount: paymentData.amount,
         currency: paymentData.currency,
