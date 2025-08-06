@@ -23,6 +23,7 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
     focusArea: existingSession?.focusArea || '',
     summary: existingSession?.summary || '',
     actionItems: existingSession?.actionItems.length ? existingSession.actionItems : [''],
+    sessionType: (existingSession?.sessionType || 'Free') as 'Free' | 'Paid' | 'Chemistry',
     dueAmount: existingSession?.dueAmount?.toString() || '',
     currency: existingSession?.currency || 'USD'
   });
@@ -37,8 +38,9 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
         focusArea: formData.focusArea,
         summary: formData.summary,
         actionItems: formData.actionItems.filter(item => item.trim() !== ''),
-        dueAmount: formData.dueAmount ? Number(formData.dueAmount) : undefined,
-        currency: formData.dueAmount ? formData.currency : undefined
+        sessionType: formData.sessionType as 'Free' | 'Paid' | 'Chemistry',
+        dueAmount: formData.sessionType === 'Paid' && formData.dueAmount ? Number(formData.dueAmount) : undefined,
+        currency: formData.sessionType === 'Paid' && formData.dueAmount ? formData.currency : undefined
       };
 
       onSave(sessionData);
@@ -77,7 +79,7 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Date *</Label>
                 <Input
@@ -87,6 +89,22 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sessionType">Session Type *</Label>
+                <Select
+                  value={formData.sessionType}
+                  onValueChange={(value) => setFormData({ ...formData, sessionType: value as 'Free' | 'Paid' | 'Chemistry' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Free">Free</SelectItem>
+                    <SelectItem value="Paid">Paid</SelectItem>
+                    <SelectItem value="Chemistry">Chemistry</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="focusArea">Focus Area *</Label>
@@ -145,44 +163,47 @@ export function SessionForm({ client, sessionNumber, existingSession, onSave, on
             <Separator className="my-6" />
             
             {/* Pricing Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                <Label className="text-base font-medium">Session Pricing (Optional)</Label>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dueAmount">Due Amount</Label>
-                  <Input
-                    id="dueAmount"
-                    type="number"
-                    step="0.01"
-                    value={formData.dueAmount}
-                    onChange={(e) => setFormData({ ...formData, dueAmount: e.target.value })}
-                    placeholder="0.00"
-                  />
+            {formData.sessionType === 'Paid' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  <Label className="text-base font-medium">Session Pricing</Label>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select
-                    value={formData.currency}
-                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="EGP">EGP</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dueAmount">Due Amount *</Label>
+                    <Input
+                      id="dueAmount"
+                      type="number"
+                      step="0.01"
+                      value={formData.dueAmount}
+                      onChange={(e) => setFormData({ ...formData, dueAmount: e.target.value })}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="EGP">EGP</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="flex-1">

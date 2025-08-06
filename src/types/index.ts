@@ -15,6 +15,7 @@ export interface Session {
   focusArea: string;
   summary: string;
   actionItems: string[];
+  sessionType?: 'Free' | 'Paid' | 'Chemistry';
   dueAmount?: number;
   currency?: string;
   createdAt: Date;
