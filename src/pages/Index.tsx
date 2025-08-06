@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Client, Session, Payment } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
-import Navigation from '@/components/Navigation';
+import { AppSidebar } from '@/components/AppSidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { ClientList } from '@/components/ClientList';
 import ClientForm from '@/components/ClientForm';
@@ -12,6 +12,7 @@ import { SessionForm } from '@/components/SessionForm';
 import { SessionDetail } from '@/components/SessionDetail';
 import { PaymentForm } from '@/components/PaymentForm';
 import { Loader2 } from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 type MainView = 'dashboard' | 'clients';
 type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit' | 'payment-form' | 'payment-edit';
@@ -166,104 +167,110 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {!subView && (
-        <Navigation 
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar 
+          currentView={mainView}
           onViewDashboard={() => handleMainViewChange('dashboard')}
           onViewClients={() => handleMainViewChange('clients')}
-          currentView={mainView}
           onSignOut={signOut}
         />
-      )}
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Main views */}
-        {mainView === 'dashboard' && !subView && (
-          <Dashboard
-            clients={clients}
-            sessions={sessions}
-            payments={payments}
-            onViewClients={() => handleMainViewChange('clients')}
-          />
-        )}
+        
+        <main className="flex-1 flex flex-col">
+          <header className="h-12 flex items-center border-b bg-background">
+            <SidebarTrigger className="ml-4" />
+          </header>
+          
+          <div className="flex-1 p-6">
+            {/* Main views */}
+            {mainView === 'dashboard' && !subView && (
+              <Dashboard
+                clients={clients}
+                sessions={sessions}
+                payments={payments}
+                onViewClients={() => handleMainViewChange('clients')}
+              />
+            )}
 
-        {mainView === 'clients' && !subView && (
-          <ClientList
-            clients={clients}
-            onSelectClient={handleSelectClient}
-            onAddClient={handleAddClient}
-          />
-        )}
+            {mainView === 'clients' && !subView && (
+              <ClientList
+                clients={clients}
+                onSelectClient={handleSelectClient}
+                onAddClient={handleAddClient}
+              />
+            )}
 
-        {/* Sub views */}
-        {subView === 'client-form' && (
-          <ClientForm
-            onSave={handleSaveClient}
-            onCancel={() => setSubView(null)}
-          />
-        )}
+            {/* Sub views */}
+            {subView === 'client-form' && (
+              <ClientForm
+                onSave={handleSaveClient}
+                onCancel={() => setSubView(null)}
+              />
+            )}
 
-        {subView === 'sessions' && selectedClient && (
-          <SessionList
-            client={selectedClient}
-            sessions={getClientSessions(selectedClient.id)}
-            onBack={handleBackToClients}
-            onAddSession={handleAddSession}
-            onViewSession={handleViewSession}
-          />
-        )}
+            {subView === 'sessions' && selectedClient && (
+              <SessionList
+                client={selectedClient}
+                sessions={getClientSessions(selectedClient.id)}
+                onBack={handleBackToClients}
+                onAddSession={handleAddSession}
+                onViewSession={handleViewSession}
+              />
+            )}
 
-        {subView === 'session-form' && selectedClient && (
-          <SessionForm
-            client={selectedClient}
-            sessionNumber={getNextSessionNumber(selectedClient.id)}
-            onSave={handleSaveSession}
-            onCancel={handleBackToSessions}
-          />
-        )}
+            {subView === 'session-form' && selectedClient && (
+              <SessionForm
+                client={selectedClient}
+                sessionNumber={getNextSessionNumber(selectedClient.id)}
+                onSave={handleSaveSession}
+                onCancel={handleBackToSessions}
+              />
+            )}
 
-        {subView === 'session-detail' && selectedClient && selectedSession && (
-          <SessionDetail
-            client={selectedClient}
-            session={selectedSession}
-            payments={getSessionPayments(selectedSession.id)}
-            onBack={handleBackToSessions}
-            onEdit={() => handleEditSession(selectedSession)}
-            onAddPayment={handleAddPayment}
-            onEditPayment={handleEditPayment}
-            onDeletePayment={handleDeletePayment}
-          />
-        )}
+            {subView === 'session-detail' && selectedClient && selectedSession && (
+              <SessionDetail
+                client={selectedClient}
+                session={selectedSession}
+                payments={getSessionPayments(selectedSession.id)}
+                onBack={handleBackToSessions}
+                onEdit={() => handleEditSession(selectedSession)}
+                onAddPayment={handleAddPayment}
+                onEditPayment={handleEditPayment}
+                onDeletePayment={handleDeletePayment}
+              />
+            )}
 
-        {subView === 'session-edit' && selectedClient && selectedSession && (
-          <SessionForm
-            client={selectedClient}
-            sessionNumber={selectedSession.sessionNumber}
-            existingSession={selectedSession}
-            onSave={handleUpdateSession}
-            onCancel={() => setSubView('session-detail')}
-          />
-        )}
+            {subView === 'session-edit' && selectedClient && selectedSession && (
+              <SessionForm
+                client={selectedClient}
+                sessionNumber={selectedSession.sessionNumber}
+                existingSession={selectedSession}
+                onSave={handleUpdateSession}
+                onCancel={() => setSubView('session-detail')}
+              />
+            )}
 
-        {subView === 'payment-form' && selectedSession && (
-          <PaymentForm
-            sessionId={selectedSession.id}
-            defaultCurrency={selectedSession.currency}
-            onSave={handleSavePayment}
-            onCancel={handleBackToSessions}
-          />
-        )}
+            {subView === 'payment-form' && selectedSession && (
+              <PaymentForm
+                sessionId={selectedSession.id}
+                defaultCurrency={selectedSession.currency}
+                onSave={handleSavePayment}
+                onCancel={handleBackToSessions}
+              />
+            )}
 
-        {subView === 'payment-edit' && selectedPayment && (
-          <PaymentForm
-            sessionId={selectedPayment.sessionId}
-            existingPayment={selectedPayment}
-            onSave={handleUpdatePayment}
-            onCancel={() => setSubView('session-detail')}
-          />
-        )}
+            {subView === 'payment-edit' && selectedPayment && (
+              <PaymentForm
+                sessionId={selectedPayment.sessionId}
+                existingPayment={selectedPayment}
+                onSave={handleUpdatePayment}
+                onCancel={() => setSubView('session-detail')}
+              />
+            )}
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
