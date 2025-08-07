@@ -27,7 +27,7 @@ export interface Payment {
   amount: number;
   currency: string;
   paymentDate: Date;
-  paymentMethod: 'Bank Transfer' | 'Cash' | 'PayPal' | 'Stripe' | 'Other';
+  paymentMethod: 'bank_transfer' | 'credit_card' | 'cash' | 'check' | 'paypal';
   notes?: string;
   createdAt: Date;
 }

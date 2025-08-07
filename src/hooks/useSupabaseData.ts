@@ -122,7 +122,7 @@ export const useSupabaseData = () => {
       amount: Number(payment.amount),
       currency: payment.currency || 'USD',
       paymentDate: new Date(payment.payment_date),
-      paymentMethod: payment.payment_method as Payment['paymentMethod'] || 'Bank Transfer',
+      paymentMethod: payment.payment_method as Payment['paymentMethod'] || 'bank_transfer',
       notes: payment.notes || undefined,
       createdAt: new Date(payment.created_at),
     }));

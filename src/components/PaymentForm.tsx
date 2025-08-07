@@ -20,7 +20,7 @@ export function PaymentForm({ sessionId, existingPayment, defaultCurrency = 'USD
     amount: existingPayment?.amount.toString() || '',
     currency: existingPayment?.currency || defaultCurrency,
     paymentDate: existingPayment ? new Date(existingPayment.paymentDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    paymentMethod: existingPayment?.paymentMethod || 'Bank Transfer' as const,
+    paymentMethod: existingPayment?.paymentMethod || 'bank_transfer' as const,
     notes: existingPayment?.notes || ''
   });
 
@@ -103,11 +103,11 @@ export function PaymentForm({ sessionId, existingPayment, defaultCurrency = 'USD
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="PayPal">PayPal</SelectItem>
-                  <SelectItem value="Stripe">Stripe</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="check">Check</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -20,7 +20,7 @@ export function PaymentFormGlobal({ sessions, clients, onSave, onCancel }: Payme
     amount: '',
     currency: 'USD',
     paymentDate: new Date().toISOString().split('T')[0],
-    paymentMethod: 'Bank Transfer' as const,
+    paymentMethod: 'bank_transfer' as const,
     notes: ''
   });
 
@@ -139,13 +139,13 @@ export function PaymentFormGlobal({ sessions, clients, onSave, onCancel }: Payme
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="PayPal">PayPal</SelectItem>
-                  <SelectItem value="Stripe">Stripe</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
             
