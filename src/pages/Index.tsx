@@ -8,13 +8,17 @@ import { Dashboard } from '@/components/Dashboard';
 import { ClientList } from '@/components/ClientList';
 import ClientForm from '@/components/ClientForm';
 import { SessionList } from '@/components/SessionList';
+import SessionListGlobal from '@/components/SessionListGlobal';
 import { SessionForm } from '@/components/SessionForm';
 import { SessionDetail } from '@/components/SessionDetail';
 import { PaymentForm } from '@/components/PaymentForm';
+import PaymentListGlobal from '@/components/PaymentListGlobal';
+import { SessionFormGlobal } from '@/components/SessionFormGlobal';
+import { PaymentFormGlobal } from '@/components/PaymentFormGlobal';
 import { Loader2 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
-type MainView = 'dashboard' | 'clients';
+type MainView = 'dashboard' | 'clients' | 'sessions' | 'payments';
 type SubView = 'client-form' | 'sessions' | 'session-form' | 'session-detail' | 'session-edit' | 'payment-form' | 'payment-edit';
 
 const Index = () => {
@@ -173,6 +177,8 @@ const Index = () => {
           currentView={mainView}
           onViewDashboard={() => handleMainViewChange('dashboard')}
           onViewClients={() => handleMainViewChange('clients')}
+          onViewSessions={() => handleMainViewChange('sessions')}
+          onViewPayments={() => handleMainViewChange('payments')}
           onSignOut={signOut}
         />
         
@@ -200,6 +206,27 @@ const Index = () => {
               />
             )}
 
+            {mainView === 'sessions' && !subView && (
+              <SessionListGlobal
+                sessions={sessions}
+                clients={clients}
+                onBack={() => handleMainViewChange('dashboard')}
+                onAddSession={() => setSubView('session-form')}
+                onViewSession={handleViewSession}
+              />
+            )}
+
+            {mainView === 'payments' && !subView && (
+              <PaymentListGlobal
+                payments={payments}
+                sessions={sessions}
+                clients={clients}
+                onAddPayment={() => setSubView('payment-form')}
+                onEditPayment={handleEditPayment}
+                onDeletePayment={handleDeletePayment}
+              />
+            )}
+
             {/* Sub views */}
             {subView === 'client-form' && (
               <ClientForm
@@ -224,6 +251,14 @@ const Index = () => {
                 sessionNumber={getNextSessionNumber(selectedClient.id)}
                 onSave={handleSaveSession}
                 onCancel={handleBackToSessions}
+              />
+            )}
+
+            {subView === 'session-form' && !selectedClient && mainView === 'sessions' && (
+              <SessionFormGlobal
+                clients={clients}
+                onSave={handleSaveSession}
+                onCancel={() => setSubView(null)}
               />
             )}
 
@@ -256,6 +291,15 @@ const Index = () => {
                 defaultCurrency={selectedSession.currency}
                 onSave={handleSavePayment}
                 onCancel={handleBackToSessions}
+              />
+            )}
+
+            {subView === 'payment-form' && !selectedSession && mainView === 'payments' && (
+              <PaymentFormGlobal
+                sessions={sessions}
+                clients={clients}
+                onSave={handleSavePayment}
+                onCancel={() => setSubView(null)}
               />
             )}
 

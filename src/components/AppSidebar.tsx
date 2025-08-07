@@ -17,6 +17,8 @@ interface AppSidebarProps {
   currentView: string;
   onViewDashboard: () => void;
   onViewClients: () => void;
+  onViewSessions: () => void;
+  onViewPayments: () => void;
   onSignOut: () => void;
 }
 
@@ -31,14 +33,28 @@ const navigationItems = [
     icon: Users,
     view: "clients",
   },
+  {
+    title: "Sessions",
+    icon: Calendar,
+    view: "sessions",
+  },
+  {
+    title: "Payments",
+    icon: CreditCard,
+    view: "payments",
+  },
 ];
 
-export function AppSidebar({ currentView, onViewDashboard, onViewClients, onSignOut }: AppSidebarProps) {
+export function AppSidebar({ currentView, onViewDashboard, onViewClients, onViewSessions, onViewPayments, onSignOut }: AppSidebarProps) {
   const handleItemClick = (view: string) => {
     if (view === "dashboard") {
       onViewDashboard();
     } else if (view === "clients") {
       onViewClients();
+    } else if (view === "sessions") {
+      onViewSessions();
+    } else if (view === "payments") {
+      onViewPayments();
     }
   };
 
